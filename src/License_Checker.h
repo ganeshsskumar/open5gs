@@ -60,7 +60,7 @@ INT32 checkLicense(INT8 *si8Appname, INT8 *gsi8TOC);
  * I/P & O/P parameter  : None
  * Return value         : None
  ******************************************************************************/
-void GetLicenseAPIVersionNumber();
+void GetLicenseAPIVersionNumber(void);
 
 #endif 
 /*********************************END LICENSE_CHECKER_H_ *********************/
