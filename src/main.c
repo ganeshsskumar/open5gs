@@ -233,7 +233,7 @@ int main(int argc, const char *const argv[])
     }
     else
     {
-         printf(“License Expired...!, Closing the app\n”);
+         printf("License Expired...!, Closing the app\n");
          exit(0);
     }
 
