@@ -15,7 +15,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- * Ganesh changes
  */
 
 #include <signal.h>
@@ -24,7 +23,9 @@
 
 #include "ogs-app.h"
 #include "version.h"
-
+#include "License_Checker.h"
+char app_name[20] = "L2_L3_APP";
+char TOC[30] ="Wed 2025-10-14 10:54:18 IST";
 static void show_version(void)
 {
     printf("Open5GS %s\n\n", OPEN5GS_VERSION);
@@ -98,6 +99,9 @@ int main(int argc, const char *const argv[])
      *
      * Keep the order of starting-up
      */
+     int status = LICENSE_VOID;
+     status = checkLicense(app_name, TOC);
+     printf("License Check Status: %d \n", status);
     int rv, i, opt;
     ogs_getopt_t options;
     struct {
@@ -216,14 +220,21 @@ int main(int argc, const char *const argv[])
         ogs_fatal("Open5GS initialization failed. Aborted");
         return OGS_ERROR;
     }
+    if(status == LICENSE_VALID)
+    {
+        rv = app_initialize(argv_out);
+        if (rv != OGS_OK) {
+            if (rv == OGS_RETRY)
+                return EXIT_SUCCESS;
 
-    rv = app_initialize(argv_out);
-    if (rv != OGS_OK) {
-        if (rv == OGS_RETRY)
-            return EXIT_SUCCESS;
-
-        ogs_fatal("Open5GS initialization failed. Aborted");
-        return OGS_ERROR;
+            ogs_fatal("Open5GS initialization failed. Aborted");
+            return OGS_ERROR;
+        }    
+    }
+    else
+    {
+         printf(“License Expired...!, Closing the app\n”);
+         exit(0);
     }
 
     atexit(terminate);
