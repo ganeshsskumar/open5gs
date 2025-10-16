@@ -59,7 +59,7 @@ pcrf_sources = files('''
 executable('open5gs-pcrfd',
     sources : pcrf_sources,
     c_args : '-DDEFAULT_CONFIG_FILENAME="@0@/pcrf.yaml"'.format(open5gs_sysconfdir),
-    include_directories : srcinc,
-    dependencies : libpcrf_dep,
+    include_directories : [srcinc, incdir_license],
+    dependencies : [libpcrf_dep, license_lib],
     install_rpath : libdir,
     install : true)
