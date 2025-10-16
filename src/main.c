@@ -212,17 +212,17 @@ int main(int argc, const char *const argv[])
     ogs_signal_init();
     ogs_setup_signal_thread();
 
-    rv = ogs_app_initialize(OPEN5GS_VERSION, DEFAULT_CONFIG_FILENAME, argv_out);
-    if (rv != OGS_OK) {
-        if (rv == OGS_RETRY)
-            return EXIT_SUCCESS;
-
-        ogs_fatal("Open5GS initialization failed. Aborted");
-        return OGS_ERROR;
-    }
     if(status == LICENSE_VALID)
     {
-        rv = app_initialize(argv_out);
+        rv = ogs_app_initialize(OPEN5GS_VERSION, DEFAULT_CONFIG_FILENAME, argv_out);
+        if (rv != OGS_OK) {
+            if (rv == OGS_RETRY)
+                return EXIT_SUCCESS;
+
+            ogs_fatal("Open5GS initialization failed. Aborted");
+            return OGS_ERROR;
+        }
+    rv = app_initialize(argv_out);
         if (rv != OGS_OK) {
             if (rv == OGS_RETRY)
                 return EXIT_SUCCESS;
