@@ -34,6 +34,7 @@ version_conf.set_quoted('OPEN5GS_VERSION', package_version)
 configure_file(output : 'version.h', configuration : version_conf)
 
 # License Checker integration
+incdir_license = include_directories('../src')
 license_lib = cc.find_library('LwsLicenseCheck', dirs: ['/usr/lib'], required: true)
 
 
