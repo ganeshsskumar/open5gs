@@ -15,9 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# License Checker integration
-license_lib = cc.find_library('LwsLicenseCheck', dirs: ['/usr/lib', '../lib'], required: true)
-
 srcinc = include_directories('.')
 
 package_version = 'v' + meson.project_version()
@@ -35,6 +32,10 @@ endif
 version_conf = configuration_data()
 version_conf.set_quoted('OPEN5GS_VERSION', package_version)
 configure_file(output : 'version.h', configuration : version_conf)
+
+# License Checker integration
+license_lib = cc.find_library('LwsLicenseCheck', dirs: ['/usr/lib'], required: true)
+
 
 subdir('mme')
 subdir('hss')
