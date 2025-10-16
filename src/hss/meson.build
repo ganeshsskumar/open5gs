@@ -68,7 +68,7 @@ hss_sources = files('''
 executable('open5gs-hssd',
     sources : hss_sources,
     c_args : '-DDEFAULT_CONFIG_FILENAME="@0@/hss.yaml"'.format(open5gs_sysconfdir),
-    include_directories : srcinc,
-    dependencies : libhss_dep,
+    include_directories : [srcinc, incdir_license],
+    dependencies : [libhss_dep, license_lib],
     install_rpath : libdir,
     install : true)
