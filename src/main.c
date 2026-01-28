@@ -216,8 +216,8 @@ int main(int argc, const char *const argv[])
     ogs_signal_init();
     ogs_setup_signal_thread();
 
-   # if(status == LICENSE_VALID)
-   # {
+   // if(status == LICENSE_VALID)
+   // {
         rv = ogs_app_initialize(OPEN5GS_VERSION, DEFAULT_CONFIG_FILENAME, argv_out);
         if (rv != OGS_OK) {
             if (rv == OGS_RETRY)
@@ -234,12 +234,12 @@ int main(int argc, const char *const argv[])
             ogs_fatal("Open5GS initialization failed. Aborted");
             return OGS_ERROR;
         }    
-   # }
-    #else
-   # {
-   #      printf("License Expired...!, Closing the app\n");
-    #     exit(1);
-    #}
+   // }
+    //else
+   // {
+   //      printf("License Expired...!, Closing the app\n");
+    //     exit(1);
+    //}
 
     atexit(terminate);
     ogs_signal_thread(check_signal);
