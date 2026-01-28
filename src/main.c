@@ -25,7 +25,7 @@
 #include "version.h"
 #include "License_Checker.h"
 char app_name[20] = "L2_L3_APP";
-char TOC[30] ="Wed 2025-10-14 10:54:18 IST";
+char TOC[30] ="Mon 2026-1-26 10:54:18 IST";
 static void show_version(void)
 {
     printf("Open5GS %s\n\n", OPEN5GS_VERSION);
