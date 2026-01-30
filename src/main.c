@@ -23,7 +23,9 @@
 
 #include "ogs-app.h"
 #include "version.h"
-#include "License_Checker.h"
+#ifdef ENABLE_LICENSE_CHECK
+    #include "License_Checker.h"
+#endif
 char app_name[20] = "L2_L3_APP";
 char TOC[30] ="Wed 2026-01-28 10:54:18 IST";
 static void show_version(void)
@@ -103,6 +105,13 @@ int main(int argc, const char *const argv[])
      printf("Before calling the check license.\n");
      status = checkLicense(app_name, TOC);
      printf("License Check Status: %d \n", status);
+#ifdef ENABLE_LICENSE_CHECK
+    int status = checkLicense("L2_L3_APP", "TOC_STRING");
+    if (status != LICENSE_VALID) {
+        printf("License Invalid\n");
+        exit(1);
+    }
+#endif
     
     int rv, i, opt;
     ogs_getopt_t options;
@@ -214,16 +223,14 @@ int main(int argc, const char *const argv[])
     ogs_signal_init();
     ogs_setup_signal_thread();
 
-    if(status == LICENSE_VALID)
-    {
-        rv = ogs_app_initialize(OPEN5GS_VERSION, DEFAULT_CONFIG_FILENAME, argv_out);
-        if (rv != OGS_OK) {
-            if (rv == OGS_RETRY)
-                return EXIT_SUCCESS;
+    rv = ogs_app_initialize(OPEN5GS_VERSION, DEFAULT_CONFIG_FILENAME, argv_out);
+    if (rv != OGS_OK) {
+        if (rv == OGS_RETRY)
+            return EXIT_SUCCESS;
 
-            ogs_fatal("Open5GS initialization failed. Aborted");
-            return OGS_ERROR;
-        }
+        ogs_fatal("Open5GS initialization failed. Aborted");
+        return OGS_ERROR;
+    }
     rv = app_initialize(argv_out);
         if (rv != OGS_OK) {
             if (rv == OGS_RETRY)
@@ -231,13 +238,7 @@ int main(int argc, const char *const argv[])
 
             ogs_fatal("Open5GS initialization failed. Aborted");
             return OGS_ERROR;
-        }    
-    }
-    else
-    {
-         printf("License Expired...!, Closing the app\n");
-         exit(0);
-    }
+    }    
 
     atexit(terminate);
     ogs_signal_thread(check_signal);
