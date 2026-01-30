@@ -51,7 +51,7 @@ ausf_sources = files('''
 executable('open5gs-ausfd',
     sources : ausf_sources,
     c_args : '-DDEFAULT_CONFIG_FILENAME="@0@/ausf.yaml"'.format(open5gs_sysconfdir),
-    include_directories : [srcinc, incdir_license],
-    dependencies : [libausf_dep, license_lib],
+    include_directories : [srcinc],
+    dependencies : [libausf_dep],
     install_rpath : libdir,
     install : true)
