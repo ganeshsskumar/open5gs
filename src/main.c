@@ -100,12 +100,10 @@ int main(int argc, const char *const argv[])
      * Keep the order of starting-up
      */
      int status = LICENSE_VOID;
+     printf("Before calling the check license.\n");
      status = checkLicense(app_name, TOC);
      printf("License Check Status: %d \n", status);
-    if (status != LICENSE_VALID) {
-    printf("License check failed (status=%d). Exiting.\n", status);
-    return EXIT_FAILURE;
-    }
+    
     int rv, i, opt;
     ogs_getopt_t options;
     struct {
@@ -216,8 +214,8 @@ int main(int argc, const char *const argv[])
     ogs_signal_init();
     ogs_setup_signal_thread();
 
-   // if(status == LICENSE_VALID)
-   // {
+    if(status == LICENSE_VALID)
+    {
         rv = ogs_app_initialize(OPEN5GS_VERSION, DEFAULT_CONFIG_FILENAME, argv_out);
         if (rv != OGS_OK) {
             if (rv == OGS_RETRY)
@@ -234,12 +232,12 @@ int main(int argc, const char *const argv[])
             ogs_fatal("Open5GS initialization failed. Aborted");
             return OGS_ERROR;
         }    
-   // }
-    //else
-   // {
-   //      printf("License Expired...!, Closing the app\n");
-    //     exit(1);
-    //}
+    }
+    else
+    {
+         printf("License Expired...!, Closing the app\n");
+         exit(0);
+    }
 
     atexit(terminate);
     ogs_signal_thread(check_signal);
