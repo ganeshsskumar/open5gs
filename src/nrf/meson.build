@@ -47,7 +47,7 @@ nrf_sources = files('''
 executable('open5gs-nrfd',
     sources : nrf_sources,
     c_args : '-DDEFAULT_CONFIG_FILENAME="@0@/nrf.yaml"'.format(open5gs_sysconfdir),
-    include_directories : [srcinc, incdir_license],
-    dependencies : [libnrf_dep, license_lib],
+    include_directories : [srcinc],
+    dependencies : [libnrf_dep],
     install_rpath : libdir,
     install : true)
