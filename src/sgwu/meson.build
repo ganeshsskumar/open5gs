@@ -54,7 +54,7 @@ sgwu_sources = files('''
 executable('open5gs-sgwud',
     sources : sgwu_sources,
     c_args : '-DDEFAULT_CONFIG_FILENAME="@0@/sgwu.yaml"'.format(open5gs_sysconfdir),
-    include_directories : [srcinc, incdir_license],
-    dependencies : [libsgwu_dep, license_lib],
+    include_directories : [srcinc],
+    dependencies : [libsgwu_dep],
     install_rpath : libdir,
     install : true)
