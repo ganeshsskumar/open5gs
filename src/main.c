@@ -101,10 +101,9 @@ int main(int argc, const char *const argv[])
      *
      * Keep the order of starting-up
      */
-     int status = LICENSE_VOID;
-     printf("Before calling the check license.\n");
-     
 #ifdef ENABLE_LICENSE_CHECK
+    int status = LICENSE_VOID;
+    printf("Before calling the check license.\n");
     status = checkLicense(app_name, TOC);
     printf("License Check Status: %d \n", status);
     if (status != LICENSE_VALID) {
