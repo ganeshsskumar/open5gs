@@ -103,10 +103,10 @@ int main(int argc, const char *const argv[])
      */
      int status = LICENSE_VOID;
      printf("Before calling the check license.\n");
-     status = checkLicense(app_name, TOC);
-     printf("License Check Status: %d \n", status);
+     
 #ifdef ENABLE_LICENSE_CHECK
     int status = checkLicense("L2_L3_APP", "TOC_STRING");
+    printf("License Check Status: %d \n", status);
     if (status != LICENSE_VALID) {
         printf("License Invalid\n");
         exit(1);
