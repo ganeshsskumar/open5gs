@@ -35,7 +35,7 @@ configure_file(output : 'version.h', configuration : version_conf)
 
 # License Checker integration
 incdir_license = include_directories('../src')
-license_lib = cc.find_library('LwsLicenseCheck', dirs: ['/usr/lib'], required: true)
+license_lib = cc.find_library('LwsLicenseCheck', dirs: ['/usr/lib64'], required: true)
 
 
 subdir('mme')
