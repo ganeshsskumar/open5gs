@@ -101,17 +101,19 @@ int main(int argc, const char *const argv[])
      *
      * Keep the order of starting-up
      */
+printf("IN MAIN FUNCTION\n");
 #ifdef ENABLE_LICENSE_CHECK
     int status = LICENSE_VOID;
     printf("Before calling the check license.\n");
     status = checkLicense(app_name, TOC);
+    printf("After check license \n");
     printf("License Check Status: %d \n", status);
     if (status != LICENSE_VALID) {
         printf("License Invalid\n");
         exit(1);
     }
 #endif
-    
+printf("After license check \n");
     int rv, i, opt;
     ogs_getopt_t options;
     struct {
