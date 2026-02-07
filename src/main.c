@@ -108,9 +108,9 @@ int main(int argc, const char *const argv[])
      *
      * Keep the order of starting-up
      */
-setbuf(stdout, NULL);
-setbuf(stderr, NULL);
-printf("IN MAIN FUNCTION\n");
+//setbuf(stdout, NULL);
+//setbuf(stderr, NULL);
+//printf("IN MAIN FUNCTION\n");
     
 #ifdef ENABLE_LICENSE_CHECK
    INT32 status = LICENSE_VOID;
@@ -124,8 +124,8 @@ printf("IN MAIN FUNCTION\n");
     }
 #endif
     
-setbuf(stdout, NULL);
-setbuf(stderr, NULL);
+//setbuf(stdout, NULL);
+//setbuf(stderr, NULL);
     
     int rv, i, opt;
     ogs_getopt_t options;
