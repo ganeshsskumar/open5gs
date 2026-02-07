@@ -123,7 +123,10 @@ printf("IN MAIN FUNCTION\n");
         exit(1);
     }
 #endif
-
+    
+setbuf(stdout, NULL);
+setbuf(stderr, NULL);
+    
     int rv, i, opt;
     ogs_getopt_t options;
     struct {
