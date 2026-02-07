@@ -108,9 +108,8 @@ int main(int argc, const char *const argv[])
      *
      * Keep the order of starting-up
      */
-//setbuf(stdout, NULL);
-//setbuf(stderr, NULL);
-//printf("IN MAIN FUNCTION\n");
+setbuf(stdout, NULL);
+setbuf(stderr, NULL);
     
 #ifdef ENABLE_LICENSE_CHECK
    INT32 status = LICENSE_VOID;
@@ -123,9 +122,6 @@ int main(int argc, const char *const argv[])
         exit(1);
     }
 #endif
-    
-//setbuf(stdout, NULL);
-//setbuf(stderr, NULL);
     
     int rv, i, opt;
     ogs_getopt_t options;
