@@ -16,22 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <stdio.h>
-
 #include <signal.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
 #include "ogs-app.h"
 #include "version.h"
+
 #ifdef ENABLE_LICENSE_CHECK
 
 #include "License_Checker.h"
+
 #define TOC_BUFFER_SIZE              30 
 #define APP_NAME_BUFFER_SIZE         10
 
 INT8 gsi8Appname[APP_NAME_BUFFER_SIZE] ="L2_L3_APP";
 INT8 gsi8TOC[TOC_BUFFER_SIZE] ="Fri 2026-02-6 11:00:40 UTC";
+
 #endif
 
 static void show_version(void)
@@ -107,6 +108,8 @@ int main(int argc, const char *const argv[])
      *
      * Keep the order of starting-up
      */
+setbuf(stdout, NULL);
+setbuf(stderr, NULL);
 printf("IN MAIN FUNCTION\n");
     
 #ifdef ENABLE_LICENSE_CHECK
@@ -136,7 +139,7 @@ printf("After license check \n");
     const char *argv_out[argc+1];
 
     memset(&optarg, 0, sizeof(optarg));
-
+    printf("After license check \n");
     ogs_getopt_init(&options, (char**)argv);
     while ((opt = ogs_getopt(&options, "vhDc:l:e:m:dtk:")) != -1) {
         switch (opt) {
