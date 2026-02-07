@@ -37,9 +37,10 @@
 #define TOC_BUFFER_SIZE              30 
 #define APP_NAME_BUFFER_SIZE         10
 
-#endif
 INT8 gsi8Appname[APP_NAME_BUFFER_SIZE] ="L2_L3_APP";
 INT8 gsi8TOC[TOC_BUFFER_SIZE] ="Fri 2026-02-6 11:00:40 UTC";
+#endif
+
 static void show_version(void)
 {
     printf("Open5GS %s\n\n", OPEN5GS_VERSION);
