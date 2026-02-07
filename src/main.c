@@ -123,7 +123,7 @@ printf("IN MAIN FUNCTION\n");
         exit(1);
     }
 #endif
-printf("After license check \n");
+
     int rv, i, opt;
     ogs_getopt_t options;
     struct {
@@ -139,7 +139,7 @@ printf("After license check \n");
     const char *argv_out[argc+1];
 
     memset(&optarg, 0, sizeof(optarg));
-    printf("After license check \n");
+
     ogs_getopt_init(&options, (char**)argv);
     while ((opt = ogs_getopt(&options, "vhDc:l:e:m:dtk:")) != -1) {
         switch (opt) {
