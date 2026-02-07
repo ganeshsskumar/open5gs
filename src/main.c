@@ -114,14 +114,14 @@ printf("IN MAIN FUNCTION\n");
     
 #ifdef ENABLE_LICENSE_CHECK
    INT32 status = LICENSE_VOID;
-//    status = checkLicense(gsi8Appname,gsi8TOC);
- //   GetLicenseAPIVersionNumber();
+    status = checkLicense(gsi8Appname,gsi8TOC);
+    GetLicenseAPIVersionNumber();
     printf("License Check Status: %ld \n", status);
 
-//    if (status != LICENSE_VALID) {
- //       printf("License Invalid\n");
- //       exit(1);
- //   }
+    if (status != LICENSE_VALID) {
+        printf("License Invalid\n");
+        exit(1);
+    }
 #endif
 printf("After license check \n");
     int rv, i, opt;
