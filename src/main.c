@@ -19,6 +19,8 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <pthread.h>
+#include <time.h>
 
 #include "ogs-app.h"
 #include "version.h"
@@ -101,6 +103,33 @@ static void terminate(void)
     ogs_app_terminate();
 }
 
+static void *license_monitor_thread(void *arg)
+{
+    INT32 status;
+
+    while (1) {
+
+        sleep(60 * 60);   // Sleep for 24 hours
+
+        status = checkLicense(gsi8Appname, gsi8TOC);
+
+        printf("Periodic License Check Status: %d\n", status);
+
+        if (status != LICENSE_VALID) {
+
+            printf("License validation failed. Stopping Open5GS...\n");
+
+            raise(SIGTERM);
+
+            sleep(5);
+
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    return NULL;
+}
+
 int main(int argc, const char *const argv[])
 {
     /**************************************************************************
@@ -121,6 +150,17 @@ setbuf(stderr, NULL);
         printf("License Expired...!, Closing the app\n");
         exit(1);
     }
+
+    pthread_t tid;
+
+    if (pthread_create(&tid, NULL,
+            license_monitor_thread, NULL) == 0) {
+        pthread_detach(tid);
+    } else {
+        printf("Failed to start license monitoring thread\n");
+        exit(EXIT_FAILURE);
+    }
+
 #endif
     
     int rv, i, opt;
