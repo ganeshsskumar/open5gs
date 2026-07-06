@@ -113,7 +113,7 @@ static void *license_monitor_thread(void *arg)
 
         status = checkLicense(gsi8Appname, gsi8TOC);
 
-        printf("Periodic License Check Status: %d\n", status);
+        printf("Periodic License Check Status: %ld\n", status);
 
         if (status != LICENSE_VALID) {
 
