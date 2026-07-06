@@ -103,6 +103,7 @@ static void terminate(void)
     ogs_app_terminate();
 }
 
+#ifdef ENABLE_LICENSE_CHECK
 static void *license_monitor_thread(void *arg)
 {
     INT32 status;
@@ -129,6 +130,7 @@ static void *license_monitor_thread(void *arg)
 
     return NULL;
 }
+#endif
 
 int main(int argc, const char *const argv[])
 {
