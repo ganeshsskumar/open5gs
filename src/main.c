@@ -110,8 +110,15 @@ static void *license_monitor_thread(void *arg)
 
     while (1) {
 
-        sleep(60 * 60);   // Sleep for 24 hours
-
+        sleep(10 * 60);   // Sleep for 24 hours
+         /* Diagnostic: log exact filesystem state right before the check */
+        if (access("/usr/local/License_LWS_CORE", F_OK) != 0) {
+            ogs_error("License dir missing at recheck time: %s", strerror(errno));
+        } else if (access("/usr/local/License_LWS_CORE", R_OK | W_OK) != 0) {
+            ogs_error("License dir present but not R/W: %s", strerror(errno));
+        } else {
+            ogs_info("License dir present and R/W ok at recheck time");
+        }
         status = checkLicense(gsi8Appname, gsi8TOC);
 
         printf("Periodic License Check Status: %ld\n", status);
