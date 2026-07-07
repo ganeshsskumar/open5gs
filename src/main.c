@@ -110,7 +110,9 @@ static void *license_monitor_thread(void *arg)
 
     while (1) {
 
-        sleep(10 * 60);   // Sleep for 24 hours
+        sleep(3 * 60);   // Sleep for 24 hours
+        setbuf(stdout, NULL);
+        setbuf(stderr, NULL);
          /* Diagnostic: log exact filesystem state right before the check */
         if (access("/usr/local/License_LWS_CORE", F_OK) != 0) {
             ogs_error("License dir missing at recheck time: %s", strerror(errno));
