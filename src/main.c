@@ -21,8 +21,9 @@
 #include <sys/stat.h>
 #include <pthread.h>
 #include <time.h>
-#include <dirent.h>
 #include <sys/stat.h>
+#include <errno.h>
+#include <string.h>
 
 #include "ogs-app.h"
 #include "version.h"
@@ -106,37 +107,24 @@ static void terminate(void)
 }
 
 #ifdef ENABLE_LICENSE_CHECK
-static void dump_license_dir_state(const char *tag)
+static void dump_license_file_state(const char *tag)
 {
-    DIR *d = opendir("/usr/local/License_LWS_CORE");
-    if (!d) {
-        ogs_error("[%s] opendir failed: %s", tag, strerror(errno));
+    struct stat st;
+
+    if (stat("/usr/local/License_LWS_CORE", &st) != 0) {
+        ogs_error("[%s] stat failed on License_LWS_CORE: %s",
+                   tag, strerror(errno));
         return;
     }
 
-    struct dirent *ent;
-    int count = 0;
-    while ((ent = readdir(d)) != NULL) {
-        if (ent->d_name[0] == '.') continue;
-        count++;
+    ogs_info("[%s] License_LWS_CORE size=%ld mtime=%ld mode=%o",
+              tag, (long)st.st_size, (long)st.st_mtime,
+              st.st_mode & 0777);
 
-        char path[512];
-        snprintf(path, sizeof(path),
-                 "/usr/local/License_LWS_CORE/%s", ent->d_name);
-
-        struct stat st;
-        if (stat(path, &st) == 0) {
-            ogs_info("[%s] file=%s size=%ld mtime=%ld",
-                      tag, ent->d_name, (long)st.st_size, (long)st.st_mtime);
-        } else {
-            ogs_error("[%s] stat failed on %s: %s",
-                       tag, ent->d_name, strerror(errno));
-        }
-    }
-    if (count == 0) {
-        ogs_error("[%s] directory is EMPTY", tag);
-    }
-    closedir(d);
+    if (access("/usr/local/License_LWS_CORE", R_OK) != 0)
+        ogs_error("[%s] not readable: %s", tag, strerror(errno));
+    if (access("/usr/local/License_LWS_CORE", W_OK) != 0)
+        ogs_error("[%s] not writable: %s", tag, strerror(errno));
 }
 
 static void *license_monitor_thread(void *arg)
@@ -156,7 +144,7 @@ static void *license_monitor_thread(void *arg)
         } else {
             ogs_info("License dir present and R/W ok at recheck time");
         }
-        dump_license_dir_state("recheck");
+        dump_license_file_state("recheck");
         status = checkLicense(gsi8Appname, gsi8TOC);
 
         printf("Periodic License Check Status: %ld\n", status);
@@ -198,7 +186,7 @@ setbuf(stderr, NULL);
         exit(1);
     }
     
-    dump_license_dir_state("startup");
+    dump_license_file_state("startup");
     
     pthread_t tid;
 
