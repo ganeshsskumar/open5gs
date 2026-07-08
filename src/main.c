@@ -105,7 +105,7 @@ static void terminate(void)
 
     ogs_app_terminate();
 }
-/*
+
 #ifdef ENABLE_LICENSE_CHECK
 static void dump_license_file_state(const char *tag)
 {
@@ -126,7 +126,8 @@ static void dump_license_file_state(const char *tag)
     if (access("/usr/local/License_LWS_CORE", W_OK) != 0)
         ogs_error("[%s] not writable: %s", tag, strerror(errno));
 }
-
+#endif
+/*
 static void *license_monitor_thread(void *arg)
 {
     INT32 status;
