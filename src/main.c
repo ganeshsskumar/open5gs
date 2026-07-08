@@ -178,7 +178,9 @@ setbuf(stderr, NULL);
     
 #ifdef ENABLE_LICENSE_CHECK
    INT32 status = LICENSE_VOID;
+    INT32 status2 = LICENSE_VOID;
     status = checkLicense(gsi8Appname,gsi8TOC);
+    status2 = checkLicense(gsi8Appname, gsi8TOC);
     GetLicenseAPIVersionNumber();
     printf("License Check Status: %ld \n", status);
 
@@ -189,7 +191,7 @@ setbuf(stderr, NULL);
     
     dump_license_file_state("startup");
      /* TEMP DIAGNOSTIC: call it again immediately, same thread */
-    INT32 status2 = checkLicense(gsi8Appname, gsi8TOC);
+    
     printf("License Check Status (2nd call, same thread, immediate): %ld \n", status2);
 
     /*
