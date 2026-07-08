@@ -105,7 +105,7 @@ static void terminate(void)
 
     ogs_app_terminate();
 }
-
+/*
 #ifdef ENABLE_LICENSE_CHECK
 static void dump_license_file_state(const char *tag)
 {
@@ -136,7 +136,7 @@ static void *license_monitor_thread(void *arg)
         sleep(3 * 60);   // Sleep for 24 hours
         setbuf(stdout, NULL);
         setbuf(stderr, NULL);
-         /* Diagnostic: log exact filesystem state right before the check */
+        # Diagnostic: log exact filesystem state right before the check 
         if (access("/usr/local/License_LWS_CORE", F_OK) != 0) {
             ogs_error("License dir missing at recheck time: %s", strerror(errno));
         } else if (access("/usr/local/License_LWS_CORE", R_OK | W_OK) != 0) {
@@ -164,7 +164,7 @@ static void *license_monitor_thread(void *arg)
     return NULL;
 }
 #endif
-
+*/
 int main(int argc, const char *const argv[])
 {
     /**************************************************************************
@@ -191,7 +191,7 @@ setbuf(stderr, NULL);
     INT32 status2 = checkLicense(gsi8Appname, gsi8TOC);
     printf("License Check Status (2nd call, same thread, immediate): %ld \n", status2);
 
-    
+    /*
    # pthread_t tid;
 
   #  if (pthread_create(&tid, NULL,
@@ -201,7 +201,7 @@ setbuf(stderr, NULL);
   #      printf("Failed to start license monitoring thread\n");
   #      exit(EXIT_FAILURE);
   #  }
-
+*/
 #endif
     
     int rv, i, opt;
