@@ -187,16 +187,20 @@ setbuf(stderr, NULL);
     }
     
     dump_license_file_state("startup");
-    
-    pthread_t tid;
+     /* TEMP DIAGNOSTIC: call it again immediately, same thread */
+    INT32 status2 = checkLicense(gsi8Appname, gsi8TOC);
+    printf("License Check Status (2nd call, same thread, immediate): %ld \n", status2);
 
-    if (pthread_create(&tid, NULL,
-            license_monitor_thread, NULL) == 0) {
-        pthread_detach(tid);
-    } else {
-        printf("Failed to start license monitoring thread\n");
-        exit(EXIT_FAILURE);
-    }
+    
+   # pthread_t tid;
+
+  #  if (pthread_create(&tid, NULL,
+  #          license_monitor_thread, NULL) == 0) {
+  #      pthread_detach(tid);
+  #  } else {
+  #      printf("Failed to start license monitoring thread\n");
+  #      exit(EXIT_FAILURE);
+  #  }
 
 #endif
     
