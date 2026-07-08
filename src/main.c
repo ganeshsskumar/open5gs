@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/wait.h>
 
 #include "ogs-app.h"
 #include "version.h"
@@ -107,50 +108,15 @@ static void terminate(void)
 }
 
 #ifdef ENABLE_LICENSE_CHECK
-static void dump_license_file_state(const char *tag)
-{
-    struct stat st;
-
-    if (stat("/usr/local/License_LWS_CORE", &st) != 0) {
-        ogs_error("[%s] stat failed on License_LWS_CORE: %s",
-                   tag, strerror(errno));
-        return;
-    }
-
-    ogs_info("[%s] License_LWS_CORE size=%ld mtime=%ld mode=%o",
-              tag, (long)st.st_size, (long)st.st_mtime,
-              st.st_mode & 0777);
-
-    if (access("/usr/local/License_LWS_CORE", R_OK) != 0)
-        ogs_error("[%s] not readable: %s", tag, strerror(errno));
-    if (access("/usr/local/License_LWS_CORE", W_OK) != 0)
-        ogs_error("[%s] not writable: %s", tag, strerror(errno));
-}
-#endif
-/*
 static void *license_monitor_thread(void *arg)
 {
-    INT32 status;
-
     while (1) {
 
-        sleep(3 * 60);   // Sleep for 24 hours
-        setbuf(stdout, NULL);
-        setbuf(stderr, NULL);
-        # Diagnostic: log exact filesystem state right before the check 
-        if (access("/usr/local/License_LWS_CORE", F_OK) != 0) {
-            ogs_error("License dir missing at recheck time: %s", strerror(errno));
-        } else if (access("/usr/local/License_LWS_CORE", R_OK | W_OK) != 0) {
-            ogs_error("License dir present but not R/W: %s", strerror(errno));
-        } else {
-            ogs_info("License dir present and R/W ok at recheck time");
-        }
-        dump_license_file_state("recheck");
-        status = checkLicense(gsi8Appname, gsi8TOC);
+        sleep(60 * 3);
 
-        printf("Periodic License Check Status: %ld\n", status);
+        int rc = system("/open5gs/install/bin/license_check_helper");
 
-        if (status != LICENSE_VALID) {
+        if (rc != 0) {
 
             printf("License validation failed. Stopping Open5GS...\n");
 
@@ -160,12 +126,14 @@ static void *license_monitor_thread(void *arg)
 
             exit(EXIT_FAILURE);
         }
+
+        ogs_info("Periodic license recheck passed");
     }
 
     return NULL;
 }
-#endif
-*/
+#endif 
+
 int main(int argc, const char *const argv[])
 {
     /**************************************************************************
@@ -177,10 +145,8 @@ setbuf(stdout, NULL);
 setbuf(stderr, NULL);
     
 #ifdef ENABLE_LICENSE_CHECK
-   INT32 status = LICENSE_VOID;
-    INT32 status2 = LICENSE_VOID;
+    INT32 status = LICENSE_VOID;
     status = checkLicense(gsi8Appname,gsi8TOC);
-    status2 = checkLicense(gsi8Appname, gsi8TOC);
     GetLicenseAPIVersionNumber();
     printf("License Check Status: %ld \n", status);
 
@@ -189,22 +155,16 @@ setbuf(stderr, NULL);
         exit(1);
     }
     
-    dump_license_file_state("startup");
-     /* TEMP DIAGNOSTIC: call it again immediately, same thread */
+    pthread_t tid;
+
+    if (pthread_create(&tid, NULL,
+            license_monitor_thread, NULL) == 0) {
+        pthread_detach(tid);
+    } else {
+        printf("Failed to start license monitoring thread\n");
+        exit(EXIT_FAILURE);
+    }
     
-    printf("License Check Status (2nd call, same thread, immediate): %ld \n", status2);
-
-    /*
-   # pthread_t tid;
-
-  #  if (pthread_create(&tid, NULL,
-  #          license_monitor_thread, NULL) == 0) {
-  #      pthread_detach(tid);
-  #  } else {
-  #      printf("Failed to start license monitoring thread\n");
-  #      exit(EXIT_FAILURE);
-  #  }
-*/
 #endif
     
     int rv, i, opt;
