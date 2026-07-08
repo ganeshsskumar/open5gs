@@ -112,7 +112,7 @@ static void *license_monitor_thread(void *arg)
 {
     while (1) {
 
-        sleep(60 * 3);
+        sleep(24 * 60 * 60); // Sleep for 24 hours
 
         int rc = system("/open5gs/install/bin/license_check_helper");
 
