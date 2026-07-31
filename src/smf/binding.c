@@ -256,7 +256,56 @@ void smf_bearer_binding(smf_sess_t *sess)
                     qos_presence = true;
                 }
             }
+        /*
+         * Re-installing a PCC rule REPLACES its packet filters.
+         *
+         * Previously this only ever ADDED flows to the existing TFT, so a rule
+         * that is re-authorized with changed media accumulated every historical
+         * filter for the life of the bearer. gx-path.c then refuses the install
+         * once  num_of_flow + count(pf_list) >= OGS_MAX_NUM_OF_FLOW_IN_BEARER
+         * (15, the TS 24.008 ceiling: the TFT packet filter identifier is 4
+         * bits). At 4 filters per authorization that allowed only THREE
+         * authorizations per call, which a VoLTE conference re-anchor, an
+         * audio->video upgrade or a hold/resume exceeds. Measured on Gx: filters
+         * climbed 4 -> 8 -> 12 and the fourth install was refused with
+         * Experimental-Result-Code 5142, after which the P-CSCF tore the call
+         * down with "Sorry no QoS available". The stale filters were also
+         * authorizing rtpengine ports that no longer carried the call.
+         *
+         * TS 29.212 4.5.2 lets the PCRF modify a dynamic rule by re-sending its
+         * Charging-Rule-Definition, which is exactly what happens here, so
+         * replacing is the correct reading.
+         *
+         * If the incoming flow set is identical to what the bearer already has
+         * we change nothing: the de-duplication below then adds nothing,
+         * pf_to_add_list stays empty and the "No need to send Update Bearer
+         * Request" path is taken as before. Only a CHANGED set wipes the list
+         * and rebuilds it, which makes pf_to_add_list == pf_list and is how
+         * smf_gtp2_send_update_bearer_request() knows to send
+         * OGS_GTP2_TFT_CODE_CREATE_NEW_TFT instead of
+         * OGS_GTP2_TFT_CODE_ADD_PACKET_FILTERS_TO_EXISTING_TFT.
+         */
+            {
+                int num_of_match = 0;
 
+                for (j = 0; j < pcc_rule->num_of_flow; j++) {
+                    ogs_flow_t *flow = &pcc_rule->flow[j];
+                    if (flow && flow->description && smf_pf_find_by_flow(
+                                bearer, flow->direction, flow->description))
+                        num_of_match++;
+                }
+
+                if (num_of_match != pcc_rule->num_of_flow ||
+                    ogs_list_count(&bearer->pf_list) !=
+                        pcc_rule->num_of_flow) {
+                    ogs_info("PCC rule [%s] flows changed "
+                            "(%d of %d matched, %d installed) - replacing TFT",
+                            pcc_rule->name, num_of_match,
+                            pcc_rule->num_of_flow,
+                            ogs_list_count(&bearer->pf_list));
+                    smf_pf_remove_all(bearer);
+                }
+            }
         /*
          * We only use the method of adding a flow to an existing tft.
          *
@@ -471,8 +520,18 @@ int smf_gtp2_send_update_bearer_request(smf_bearer_t *bearer)
 
     memset(&tft, 0, sizeof tft);
     if (ogs_list_count(&bearer->pf_to_add_list) > 0) {
+        /*
+         * smf_bearer_binding() wipes pf_list and rebuilds it whenever the rule's
+         * flow set changed, so pf_to_add_list == pf_list means "this is the whole
+         * new filter set" and the UE must be told to REPLACE its TFT. When only
+         * some filters are new (pf_to_add_list is a subset) the old additive
+         * behaviour is still correct.
+         */
         encode_traffic_flow_template(&tft, bearer,
-            OGS_GTP2_TFT_CODE_ADD_PACKET_FILTERS_TO_EXISTING_TFT);
+            ogs_list_count(&bearer->pf_to_add_list) ==
+                ogs_list_count(&bearer->pf_list) ?
+                    OGS_GTP2_TFT_CODE_CREATE_NEW_TFT :
+                    OGS_GTP2_TFT_CODE_ADD_PACKET_FILTERS_TO_EXISTING_TFT);
     }
 
     pkbuf = smf_s5c_build_update_bearer_request(
