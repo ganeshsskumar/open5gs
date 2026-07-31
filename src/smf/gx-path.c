@@ -1079,13 +1079,25 @@ static void smf_gx_cca_cb(void *data, struct msg **msg)
                             error++;
                             break;
                         }
-
+                        /*
+                         * Re-installing a rule REPLACES its packet filters (see
+                         * smf_bearer_binding()), so the count after this install
+                         * is exactly num_of_flow. This used to add the bearer's
+                         * CURRENT filter count on top, which made a rule fail
+                         * once it had been re-authorized three times -- even when
+                         * the incoming flows were byte-identical to those already
+                         * installed, because the check happens before
+                         * de-duplication. That is what refused a VoLTE conference
+                         * re-anchor with Experimental-Result-Code 5142.
+                         */
                         num_of_flow = pcc_rule->num_of_flow;
 
                         bearer = smf_bearer_find_by_pcc_rule_name(
                                 sess, pcc_rule->name);
                         if (bearer)
-                            num_of_flow += ogs_list_count(&bearer->pf_list);
+                           ogs_debug("PCC rule [%s]: replacing %d installed "
+                                    "packet filter(s)", pcc_rule->name,
+                                    ogs_list_count(&bearer->pf_list));
 
                         if (num_of_flow < OGS_MAX_NUM_OF_FLOW_IN_BEARER) {
                             pcc_rule->type = OGS_PCC_RULE_TYPE_INSTALL;
@@ -1327,13 +1339,25 @@ static int smf_gx_rar_cb( struct msg **msg, struct avp *avp,
                             result_code = OGS_DIAM_GX_DIAMETER_PCC_RULE_EVENT;
                             goto out;
                         }
-
+                        /*
+                         * Re-installing a rule REPLACES its packet filters (see
+                         * smf_bearer_binding()), so the count after this install
+                         * is exactly num_of_flow. This used to add the bearer's
+                         * CURRENT filter count on top, which made a rule fail
+                         * once it had been re-authorized three times -- even when
+                         * the incoming flows were byte-identical to those already
+                         * installed, because the check happens before
+                         * de-duplication. That is what refused a VoLTE conference
+                         * re-anchor with Experimental-Result-Code 5142.
+                         */
                         num_of_flow = pcc_rule->num_of_flow;
 
                         bearer = smf_bearer_find_by_pcc_rule_name(
                                 sess, pcc_rule->name);
                         if (bearer)
-                            num_of_flow += ogs_list_count(&bearer->pf_list);
+                            ogs_debug("PCC rule [%s]: replacing %d installed "
+                                    "packet filter(s)", pcc_rule->name,
+                                    ogs_list_count(&bearer->pf_list));
 
                         if (num_of_flow < OGS_MAX_NUM_OF_FLOW_IN_BEARER) {
                             pcc_rule->type = OGS_PCC_RULE_TYPE_INSTALL;
