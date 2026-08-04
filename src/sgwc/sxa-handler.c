@@ -1581,13 +1581,32 @@ void sgwc_sxa_handle_session_report_request(
                         sgwc_pfcp_send_session_deletion_request(
                             sess, OGS_INVALID_POOL_ID, NULL));
                 } else {
-                    ogs_error("[%s] Error Indication(Dedicated Bearer) "
-                            "from SMF", sgwc_ue->imsi_bcd);
+                    /*
+                     * DO NOT remove the bearer here. A core-side Error
+                     * Indication for a DEDICATED bearer is transient in this
+                     * deployment: it arrives 13-188 ms after every real TFT
+                     * replacement (smf/binding.c:301, "N installed - replacing
+                     * TFT") and removing the bearer in response makes the SMF's
+                     * later, legitimate Delete Bearer Request unserviceable --
+                     * s5c-handler.c:925 then answers ContextNotFound LOCALLY,
+                     * never forwards it to the MME, and the E-RAB leaks at the
+                     * MME and eNB forever. One QCI-1 GBR bearer per hold; the
+                     * reservation ratchets up until the eNB cannot schedule the
+                     * initiator's uplink. Measured 2026-08-04, 3 for 3, in
+                     * new_samasung_merge.pcapng.
+                     *
+                     * In EPC the PCRF/PGW owns a dedicated bearer's lifecycle
+                     * over Gx, so leave the decision to the SMF. Worst case a
+                     * genuinely orphaned bearer lingers until the Rx/Gx session
+                     * ends -- better than being destroyed and then undeletable.
+                     *
+                     * The ACCESS (eNB) branch above is deliberately unchanged:
+                     * there the peer really has lost the E-RAB.
+                     */
+                    ogs_warn("[%s] Error Indication(Dedicated Bearer) from SMF "
+                            "- keeping bearer, SMF owns its lifecycle",
+                            sgwc_ue->imsi_bcd);
                     ogs_info("    bearer[EBI=%d]", bearer->ebi);
-                    ogs_assert(OGS_OK ==
-                        sgwc_pfcp_send_bearer_modification_request(
-                            bearer, OGS_INVALID_POOL_ID, NULL,
-                            OGS_PFCP_MODIFY_REMOVE));
                 }
             } else {
                 ogs_error("Error Indication Ignored for Indirect Tunnel");
