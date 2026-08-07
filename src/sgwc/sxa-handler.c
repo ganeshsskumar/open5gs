@@ -1575,11 +1575,42 @@ void sgwc_sxa_handle_session_report_request(
                 }
             } else if (far->dst_if == OGS_PFCP_INTERFACE_CORE) {
                 if (sgwc_default_bearer_in_sess(sess) == bearer) {
-                    ogs_error("[%s] Error Indication(Default Bearer) from SMF",
-                                sgwc_ue->imsi_bcd);
-                    ogs_assert(OGS_OK ==
-                        sgwc_pfcp_send_session_deletion_request(
-                            sess, OGS_INVALID_POOL_ID, NULL));
+                    /*
+                     * DO NOT delete the session here. A core-side Error
+                     * Indication for the DEFAULT bearer is NOT proof that the
+                     * PDN is gone. Measured 2026-08-07, moto_mergeLog7: during
+                     * a merge the UE released S1 (Release Access Bearers,
+                     * 16:36:14.649); the resulting PFCP Session Modification
+                     * was REJECTED because the SGW-U had no FAR-ID 7
+                     * ("Cannot find FAR-ID[7] in PDR" -> PFCP Cause 69); the
+                     * SGW-U then emitted Error Indications the UPF could not
+                     * even resolve ("[DROP] Cannot find FAR by
+                     * Error-Indication"); one came back here and this branch
+                     * deleted the PDN. The MME removed APN[ims] AND
+                     * APN[internet], and the handset had to re-attach --
+                     * killing all three legs of the conference.
+                     *
+                     * The UE was fine: it returned with a Service Request
+                     * 0.5 s after the release. A momentary S1 release mid-call
+                     * has to be survivable.
+                     *
+                     * As with the dedicated-bearer branch below, in EPC the
+                     * PGW/SMF owns the session lifecycle. If the PDN really is
+                     * gone the SMF deletes it over S5 and the MME is told.
+                     * Worst case of being wrong: a stale SGW-C session lingers
+                     * until the SMF cleans it up -- better than a guaranteed
+                     * detach that drops every call the subscriber has.
+                     *
+                     * The ACCESS (eNB) branch above is deliberately unchanged:
+                     * there the peer really has lost the E-RAB.
+                     *
+                     * This does NOT fix the FAR-ID desync that starts the
+                     * storm; that is still the upstream bug to chase.
+                     */
+                    ogs_warn("[%s] Error Indication(Default Bearer) from SMF "
+                            "- keeping session, SMF owns its lifecycle",
+                            sgwc_ue->imsi_bcd);
+                    ogs_info("    bearer[EBI=%d]", bearer->ebi);
                 } else {
                     /*
                      * DO NOT remove the bearer here. A core-side Error
