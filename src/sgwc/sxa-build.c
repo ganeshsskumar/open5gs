@@ -232,7 +232,41 @@ ogs_pkbuf_t *sgwc_sxa_build_bearer_to_modify_list(
                     } else
                         ogs_assert_if_reached();
                 }
-
+                
+                /*
+                 * Do NOT reference a rule the SGW-U never installed.
+                 *
+                 * A dedicated bearer's two tunnels are installed in two
+                 * separate PFCP messages: the S5-U side at Create Bearer
+                 * Request, the S1-U side only when the Create Bearer RESPONSE
+                 * arrives with the eNB TEID. If the handset never answers the
+                 * Create Bearer Request -- which is exactly what the merge
+                 * initiator does -- the S1-U PDR/FAR is never created, yet the
+                 * bearer stays in this list. The next Release Access Bearers or
+                 * Modify Bearer then walks it and the SGW-U answers
+                 * "Cannot find FAR-ID[n] in PDR" -> PFCP cause 69 -> GTP cause
+                 * 69 -> the MME deletes EVERY PDN the subscriber has and the
+                 * phone re-attaches, killing all three legs of the conference.
+                 * PROVEN in pfcp_fail2.pcap, SGW-U SEID 0xddd:
+                 *   27.264 CreatePDR/FAR 8 accepted, no create for 7 ever
+                 *   28.932 UpdateFAR 1,3,5,7 -> Cause 69
+                 *   30.712 MME: DeleteSessionReq EBI=5 AND EBI=6
+                 *
+                 * tunnel->local_teid is written only from a Created PDR IE
+                 * (sxa-handler.c:253/:609), so zero == the user plane never
+                 * acknowledged this tunnel. CREATE is exempt because it is what
+                 * sets local_teid; REMOVE is exempt so a half-built tunnel can
+                 * still be torn down.
+                 */
+                if (!(modify_flags &
+                        (OGS_PFCP_MODIFY_CREATE|OGS_PFCP_MODIFY_REMOVE)) &&
+                    tunnel->local_teid == 0) {
+                    ogs_warn("SGW-U never confirmed this tunnel "
+                            "(interface_type=%d) - excluding it from the "
+                            "session modification", tunnel->interface_type);
+                    continue;
+                }
+                
                 if (modify_flags & OGS_PFCP_MODIFY_DEACTIVATE) {
 
                     far = tunnel->far;
