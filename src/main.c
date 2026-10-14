@@ -20,6 +20,12 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <pthread.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/wait.h>
 
 #include "ogs-app.h"
 #include "version.h"
@@ -102,6 +108,33 @@ static void terminate(void)
     ogs_app_terminate();
 }
 
+#ifdef ENABLE_LICENSE_CHECK
+static void *license_monitor_thread(void *arg)
+{
+    while (1) {
+
+        sleep(24 * 60 * 60); // Sleep for 24 hours
+
+        int rc = system("/open5gs/install/bin/license_check_helper");
+
+        if (rc != 0) {
+
+            printf("License validation failed. Stopping Open5GS...\n");
+
+            raise(SIGTERM);
+
+            sleep(5);
+
+            exit(EXIT_FAILURE);
+        }
+
+        ogs_info("Periodic license recheck passed");
+    }
+
+    return NULL;
+}
+#endif 
+
 int main(int argc, const char *const argv[])
 {
     /**************************************************************************
@@ -113,7 +146,7 @@ setbuf(stdout, NULL);
 setbuf(stderr, NULL);
     
 #ifdef ENABLE_LICENSE_CHECK
-   INT32 status = LICENSE_VOID;
+    INT32 status = LICENSE_VOID;
     status = checkLicense(gsi8Appname,gsi8TOC);
     GetLicenseAPIVersionNumber();
     printf("License Check Status: %ld \n", status);
@@ -122,6 +155,17 @@ setbuf(stderr, NULL);
         printf("License Expired...!, Closing the app\n");
         exit(1);
     }
+    
+    pthread_t tid;
+
+    if (pthread_create(&tid, NULL,
+            license_monitor_thread, NULL) == 0) {
+        pthread_detach(tid);
+    } else {
+        printf("Failed to start license monitoring thread\n");
+        exit(EXIT_FAILURE);
+    }
+    
 #endif
     
     int rv, i, opt;
