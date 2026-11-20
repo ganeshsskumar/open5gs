@@ -1537,7 +1537,6 @@ void ngap_handle_ue_context_release_request(
 
     ran_ue_t *ran_ue = NULL;
     amf_ue_t *amf_ue = NULL;
-    amf_sess_t *sess = NULL;
 
     NGAP_InitiatingMessage_t *initiatingMessage = NULL;
     NGAP_UEContextReleaseRequest_t *UEContextReleaseRequest = NULL;
@@ -1676,11 +1675,7 @@ void ngap_handle_ue_context_release_request(
         ran_ue->deactivation.group = Cause->present;
         ran_ue->deactivation.cause = (int)Cause->choice.radioNetwork;
 
-        if (!PDUSessionList) {
-            amf_sbi_send_deactivate_all_sessions(
-                    ran_ue, amf_ue, AMF_UPDATE_SM_CONTEXT_DEACTIVATED,
-                    Cause->present, (int)Cause->choice.radioNetwork);
-        } else {
+        if (PDUSessionList) {
             for (i = 0; i < PDUSessionList->list.count; i++) {
                 PDUSessionItem = (NGAP_PDUSessionResourceItemCxtRelReq_t *)
                     PDUSessionList->list.array[i];
@@ -1705,16 +1700,21 @@ void ngap_handle_ue_context_release_request(
                     ogs_assert(r != OGS_ERROR);
                     return;
                 }
-
-                sess = amf_sess_find_by_psi(amf_ue,
-                        PDUSessionItem->pDUSessionID);
-                if (SESSION_CONTEXT_IN_SMF(sess)) {
-                    amf_sbi_send_deactivate_session(
-                            ran_ue, sess, AMF_UPDATE_SM_CONTEXT_DEACTIVATED,
-                            Cause->present, (int)Cause->choice.radioNetwork);
-                }
             }
         }
+
+        /*
+         * The whole UE context is being released, so no PDU session keeps
+         * an N3 tunnel in the gNB, whatever the PDU session list says.
+         * Some gNBs list only the internet session and leave out the IMS
+         * one (e.g. right after its QoS flows were released). Deactivating
+         * only the listed sessions then left the IMS user plane pointing
+         * at the released gNB context: downlink SIP such as a BYE was
+         * dropped and the UE was never paged.
+         */
+        amf_sbi_send_deactivate_all_sessions(
+                ran_ue, amf_ue, AMF_UPDATE_SM_CONTEXT_DEACTIVATED,
+                Cause->present, (int)Cause->choice.radioNetwork);
  
         if (amf_sess_xact_count(amf_ue) == xact_count) {
             r = ngap_send_ran_ue_context_release_command(ran_ue,
