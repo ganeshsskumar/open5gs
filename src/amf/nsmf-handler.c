@@ -986,6 +986,29 @@ int amf_nsmf_pdusession_handle_update_sm_context(
             return OGS_ERROR;
         }
 
+        if (state == AMF_UPDATE_SM_CONTEXT_DUPLICATED_PDU_SESSION_ID &&
+            recvmsg->res_status == OGS_SBI_HTTP_STATUS_NOT_FOUND &&
+            amf_ue->supi && ran_ue) {
+            /*
+             * The UE re-requested a PDU session (e.g. IMS) whose old SM
+             * context the SMF no longer has: it dropped it on its own
+             * (after a failed QoS flow release) or it was restarted. The
+             * old context is gone either way, so create the new one, as
+             * the success path does, instead of sending an Error
+             * Indication that leaves the UE retrying the same request
+             * until it deregisters.
+             */
+            ogs_warn("[%s:%d] Old SM context not found in SMF - "
+                    "creating a new one", amf_ue->supi, sess->psi);
+            r = amf_sess_sbi_discover_and_send(
+                    OGS_SBI_SERVICE_TYPE_NSMF_PDUSESSION, NULL,
+                    amf_nsmf_pdusession_build_create_sm_context,
+                    ran_ue, sess, AMF_CREATE_SM_CONTEXT_NO_STATE, NULL);
+            ogs_expect(r == OGS_OK);
+            ogs_assert(r != OGS_ERROR);
+            return OGS_OK;
+        }
+
         SmContextUpdateError = recvmsg->SmContextUpdateError;
         if (!SmContextUpdateError) {
             ogs_error("[%d:%d] No SmContextUpdateError [%d]",
