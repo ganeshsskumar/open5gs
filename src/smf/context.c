@@ -2756,27 +2756,8 @@ int smf_bearer_remove(smf_bearer_t *bearer)
 
     smf_pf_identifier_pool_final(bearer);
 
-    if (SMF_IS_QOF_FLOW(bearer)) {
-        /*
-         * Return the QFI to the HEAD of the free list (ogs_pool_free()
-         * appends to the tail), so the next dedicated QoS flow of this
-         * session reuses the QFI that was just released instead of taking
-         * the next unused one.
-         *
-         * Seen with a real gNB: after the VoNR flow QFI 2 was released,
-         * setting up the next call's flow as QFI 3 was never completed by
-         * the gNB/UE, while a flow added as QFI 2 always worked.
-         */
-        if (sess->qfi_pool.avail < sess->qfi_pool.size) {
-            sess->qfi_pool.avail++;
-            sess->qfi_pool.head =
-                (sess->qfi_pool.head + sess->qfi_pool.size - 1) %
-                    sess->qfi_pool.size;
-            sess->qfi_pool.free[sess->qfi_pool.head] = bearer->qfi_node;
-            sess->qfi_pool.index[
-                ogs_pool_index(&sess->qfi_pool, bearer->qfi_node)-1] = NULL;
-        }
-    }
+    if (SMF_IS_QOF_FLOW(bearer))
+        ogs_pool_free(&sess->qfi_pool, bearer->qfi_node);
 
     ogs_pool_id_free(&smf_bearer_pool, bearer);
 
