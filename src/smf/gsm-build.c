@@ -422,8 +422,26 @@ ogs_pkbuf_t *gsm_build_pdu_session_modification_command(
 
         ogs_list_for_each_entry(
                 &sess->qos_flow_to_modify_list, qos_flow, to_modify_node) {
+            uint8_t code = qos_rule_code;
+
             ogs_assert(i < OGS_MAX_NUM_OF_BEARER);
-            gsm_encode_qos_rule(&qos_rule[i], qos_flow, qos_rule_code);
+
+            /*
+             * One request can create a new QoS flow and modify an existing
+             * one, e.g. a voice-to-video upgrade adds QFI 3 and gives QFI 2
+             * new packet filters. Only the new flow gets "create": for the
+             * existing one, add its new packet filters to its existing rule
+             * (as the SMF and UPF do), or leave the rule alone if only its
+             * QoS changed.
+             */
+            if (code == OGS_NAS_QOS_CODE_CREATE_NEW_QOS_RULE &&
+                qos_flow->modify_existing == true) {
+                if (ogs_list_count(&qos_flow->pf_to_add_list) == 0)
+                    continue;
+                code = OGS_NAS_QOS_CODE_MODIFY_EXISTING_QOS_RULE_AND_ADD_PACKET_FILTERS;
+            }
+
+            gsm_encode_qos_rule(&qos_rule[i], qos_flow, code);
             i++;
         }
 
@@ -519,10 +537,17 @@ ogs_pkbuf_t *gsm_build_pdu_session_modification_command(
 
         ogs_list_for_each_entry(
                 &sess->qos_flow_to_modify_list, qos_flow, to_modify_node) {
+            uint8_t code = qos_flow_description_code;
+
             ogs_assert(i < OGS_MAX_NUM_OF_BEARER);
 
+            /* An existing QoS flow is modified, not created (see above) */
+            if (code == OGS_NAS_CREATE_NEW_QOS_FLOW_DESCRIPTION &&
+                qos_flow->modify_existing == true)
+                code = OGS_NAS_MODIFY_NEW_QOS_FLOW_DESCRIPTION;
+
             gsm_encode_qos_flow_description(
-                &qos_flow_description[i], qos_flow, qos_flow_description_code);
+                &qos_flow_description[i], qos_flow, code);
 
             i++;
         }

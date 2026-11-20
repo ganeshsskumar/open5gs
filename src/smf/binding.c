@@ -774,11 +774,13 @@ void smf_qos_flow_binding(smf_sess_t *sess)
                 smf_bearer_qos_update(qos_flow);
 
                 pfcp_flags |= OGS_PFCP_MODIFY_CREATE;
+                qos_flow->modify_existing = false;
 
                 ogs_list_add(&sess->qos_flow_to_modify_list,
                                 &qos_flow->to_modify_node);
             } else {
                 pfcp_flags |= OGS_PFCP_MODIFY_NETWORK_REQUESTED;
+                qos_flow->modify_existing = true;
 
                 if (ogs_list_count(&qos_flow->pf_to_add_list) > 0) {
                     pfcp_flags |= OGS_PFCP_MODIFY_TFT_ADD;
@@ -803,6 +805,7 @@ void smf_qos_flow_binding(smf_sess_t *sess)
             }
 
             pfcp_flags |= OGS_PFCP_MODIFY_REMOVE;
+            qos_flow->modify_existing = false;
 
             ogs_list_add(&sess->qos_flow_to_modify_list,
                             &qos_flow->to_modify_node);

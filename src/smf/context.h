@@ -240,6 +240,14 @@ typedef struct smf_bearer_s {
     ogs_lnode_t     to_modify_node;
     ogs_lnode_t     to_delete_node;
 
+    /*
+     * Set by smf_qos_flow_binding() when this QoS flow already existed and
+     * is only being modified, while the same request creates another flow.
+     * The NAS command then uses "modify" codes for this flow instead of
+     * the "create" codes used for the new one.
+     */
+    bool            modify_existing;
+
     ogs_pfcp_pdr_t  *dl_pdr;
     ogs_pfcp_pdr_t  *ul_pdr;
     ogs_pfcp_far_t  *dl_far;
