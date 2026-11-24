@@ -1886,9 +1886,14 @@ void smf_gsm_state_operational(ogs_fsm_t *s, smf_event_t *e)
                 rv = gsm_handle_pdu_session_modification_request(sess, stream,
                         &nas_message->gsm.pdu_session_modification_request);
                 if (rv != OGS_OK) {
-                    ogs_error("[%s:%d] Cannot handle NAS message",
+                    /*
+                     * The handler has already sent PDU Session Modification
+                     * Reject; a rejected request leaves the PDU session as it
+                     * was. E.g. a UE asking to delete a QoS rule the SMF has
+                     * already released must not lose the whole session.
+                     */
+                    ogs_warn("[%s:%d] UE-requested modification rejected",
                             smf_ue->supi, sess->psi);
-                    OGS_FSM_TRAN(s, smf_gsm_state_exception);
                 }
             }
             break;
