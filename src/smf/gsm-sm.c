@@ -2120,7 +2120,21 @@ void smf_gsm_state_operational(ogs_fsm_t *s, smf_event_t *e)
             break;
 
         default:
-            ogs_error("Unknown message[%d]", e->ngap.type);
+            /*
+             * Always answer: an unanswered request keeps the AMF's SBI
+             * transaction open, so the AMF cannot remove the session
+             * ("SBI running") and leaves it behind.
+             */
+            strerror = ogs_msprintf("[%s:%d] Unknown message[%d]",
+                    smf_ue->supi, sess->psi, e->ngap.type);
+            ogs_assert(strerror);
+
+            ogs_error("%s", strerror);
+            ogs_assert(true ==
+                ogs_sbi_server_send_error(stream,
+                    OGS_SBI_HTTP_STATUS_BAD_REQUEST, NULL, strerror,
+                    NULL, NULL));
+            ogs_free(strerror);
         }
         break;
 
@@ -3501,7 +3515,22 @@ void smf_gsm_state_wait_5gc_n1_n2_release(ogs_fsm_t *s, smf_event_t *e)
             }
             break;
         default:
-            ogs_error("Unknown message[%d]", e->ngap.type);
+            /*
+             * Always answer, e.g. a gNB replying to PDU Session Resource
+             * Release Command with a PDU Session Resource Modify Response:
+             * left unanswered, the AMF's transaction stays open and its
+             * session cannot be removed after the release ("SBI running").
+             */
+            strerror = ogs_msprintf("[%s:%d] Unknown message[%d]",
+                    smf_ue->supi, sess->psi, e->ngap.type);
+            ogs_assert(strerror);
+
+            ogs_error("%s", strerror);
+            ogs_assert(true ==
+                ogs_sbi_server_send_error(stream,
+                    OGS_SBI_HTTP_STATUS_BAD_REQUEST, NULL, strerror,
+                    NULL, NULL));
+            ogs_free(strerror);
         }
         break;
 
